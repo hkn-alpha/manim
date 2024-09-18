@@ -22,4 +22,3 @@ class Resistor(VGroup):
 		l=Group(*RESISTOR_VERTICES, *RESISTOR_POLYGRAM_SHAPE)
 
 		VGroup.__init__(self, *RESISTOR_VERTICES, *RESISTOR_POLYGRAM_SHAPE)
-		
