@@ -1,16 +1,24 @@
 from manim import *
-from manim_hkn.resistor import Resistor
+from manim_hkn.cElements import Resistor
 
 class test(Scene):
 	def construct(self):
 
 		self.camera.background_color = BLACK
 
-		r = Resistor(self, 10)
-		r.add()
+		r = Resistor()
+		self.add(r)
 
-		self.wait(12)
+		self.play(r.animate.scale(2))
+		self.play(r.animate.set_color(GREEN))
 
-		r.remove()
+
+		self.wait(1)
+
+
+
+		self.play(r.animate.shift(RIGHT))
+
+		# # r.remove()
 
 		self.wait()
