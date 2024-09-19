@@ -1,5 +1,6 @@
 from manim import *
-from manim_hkn.cElements import Resistor
+from manim_hkn.cElements import Resistor, Capacitor
+from manim_hkn.circuit import Circuit
 
 class test(Scene):
 	def construct(self):
@@ -7,18 +8,18 @@ class test(Scene):
 		self.camera.background_color = BLACK
 
 		r = Resistor()
-		self.add(r)
+		c = Capacitor()
 
-		self.play(r.animate.scale(2))
-		self.play(r.animate.set_color(GREEN))
+		self.wait(0.2)
 
+		self.play(Create(r))
+		self.play(r.animate.scale(0.6))
+		self.play(r.animate.shift(0.6*LEFT*Resistor.SPREAD_RATIO*2+UP))
 
-		self.wait(1)
+		self.wait()
 
-
-
-		self.play(r.animate.shift(RIGHT))
-
-		# # r.remove()
+		self.play(Create(c))
+		self.play(c.animate.scale(0.6))
+		self.play(c.animate.shift(0.6*1.5*RIGHT+UP))
 
 		self.wait()
