@@ -29,6 +29,7 @@ class Capacitor(VMobject):
 
 		self.add_updater(stroke_update)
 		self.add_updater(lambda capacitor: capacitor.left.next_to(capacitor.left_terminal, RIGHT, buff = -capacitor.left_terminal.width/2))
+		self.add_updater(lambda capacitor: capacitor.right.next_to(capacitor.right_terminal, LEFT, buff = -capacitor.right_terminal.width/2))
 		
 		self.add(self.left_terminal)
 		self.add(self.right_terminal)
