@@ -1,7 +1,5 @@
 from manim import *
 from manim_hkn.cElements import Resistor, Capacitor, BJT_NPN
-from manim_hkn.circuit import Circuit
-from manim_hkn.util import get_terminal_connect_animation
 
 class test(Scene):
 	def construct(self):
@@ -10,27 +8,31 @@ class test(Scene):
 
 		r = Resistor()
 		c = Capacitor()
-		bjt_npn = BJT_NPN()
-
-		self.wait(0.1)
+		bjt_npn = BJT_NPN(color = GREEN)
 
 		self.play(Create(bjt_npn))
-
-		self.play(bjt_npn.animate.scale(0.6).shift(3 * DOWN + LEFT))
+		self.play(bjt_npn.animate.
+			scale(0.6).
+			shift(2.5 * DOWN + LEFT))
 
 		self.play(Create(r))
-		self.play(r.animate.scale(0.6))
-		self.play(r.animate.shift(3 * LEFT + 2 * UP))
-
-		self.wait()
+		self.play(r.animate.
+			scale(0.6).
+			shift(3 * LEFT + 2 * UP))
 
 		self.play(Create(c))
-		self.play(c.animate.scale(0.6).rotate(-PI/2))
+		self.play(c.animate.
+			scale(0.6).
+			rotate(-PI/4))
+		self.play(c.animate.
+			connect_terminals(Capacitor.Terminals.LEFT, r, Resistor.Terminals.RIGHT))
 
-		a = get_terminal_connect_animation(c, c.get_left_terminal_coordinates(), r.get_right_terminal_coordinates())
-		self.play(a)
+		self.play(bjt_npn.animate.
+			set_color(WHITE).
+			connect_terminals(BJT_NPN.Terminals.GATE, c, Capacitor.Terminals.RIGHT))
 
-		a = get_terminal_connect_animation(bjt_npn, bjt_npn.get_gate_terminal_coordinates(), c.get_right_terminal_coordinates())
-		self.play(a)
+		g = Group(r, c, bjt_npn)
+
+		self.play(g.animate.shift(DOWN + RIGHT))
 
 		self.wait()
