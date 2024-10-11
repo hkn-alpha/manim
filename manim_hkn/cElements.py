@@ -1,7 +1,7 @@
 from manim import *
 from enum import Enum
 
-class CircuitElementTemplate(VMobject):
+class _CircuitElementTemplate(VMobject):
 	def __init__(self, components: List[VMobject], terminalCoords: List[List[float]], **kwargs):
 		kwargs['stroke_width'] 	= kwargs.get('stroke_width', 15)
 		kwargs['color'] 		= kwargs.get('color', WHITE)
@@ -11,8 +11,8 @@ class CircuitElementTemplate(VMobject):
 		
 		self._terminal_scale_factor = 0.5
 
-		self._terminals = [Dot(radius=self._terminal_scale_factor * self.stroke_width/200., color=self.color).shift(coord) for coord in terminalCoords]
-		self._components = components
+		self._terminals:List[Dot] 		= [Dot(radius=self._terminal_scale_factor * self.stroke_width/200., color=self.color).shift(coord) for coord in terminalCoords]
+		self._components:List[VMobject] = components
 		for component in self._components:
 			component.stroke_width = self.stroke_width
 			component.joint_type = self.joint_type
@@ -21,7 +21,7 @@ class CircuitElementTemplate(VMobject):
 
 		self.add(*self._components, *self._terminals)
 
-		def updater(cElem: CircuitElementTemplate):
+		def updater(cElem: _CircuitElementTemplate):
 			cElem.set_stroke_width(100*cElem._terminals[0].width / self._terminal_scale_factor)
 			for i in range(len(self._components)):
 				cElem._components[i].set_stroke_width(100*cElem._terminals[0].width / self._terminal_scale_factor)
@@ -29,10 +29,10 @@ class CircuitElementTemplate(VMobject):
 
 	def get_terminal_coord(self, terminal_index: Enum):
 		return self._terminals[terminal_index.value].get_center()
-	def connect_terminals(self, source_terminal: Enum, dest: "CircuitElementTemplate", dest_terminal: Enum):
+	def connect_terminals(self, source_terminal: Enum, dest: "_CircuitElementTemplate", dest_terminal: Enum):
 		return self.shift(dest.get_terminal_coord(dest_terminal) - self.get_terminal_coord(source_terminal))
 	
-class BJT_NPN(CircuitElementTemplate):
+class BJT_NPN(_CircuitElementTemplate):
 	ARROW_DIST_RATIO = 0.8
 	
 	class Terminals(Enum):
@@ -44,21 +44,21 @@ class BJT_NPN(CircuitElementTemplate):
 		stroke_width = kwargs.get('stroke_width',15)
 
 		circle = Circle(radius = stroke_width / 8., stroke_width = stroke_width)
-		corners = [	[3, -1, 0], [1.3, -1, 0], [0.8, 0.8, 0], 
-					[1.2, 0.8, 0], [0, 0.8, 0], [0, 2.3, 0], [0, 0.8, 0], [-1.2, 0.8, 0],
-					[-0.8, 0.8, 0], [-1.3, -1, 0], [-3, -1, 0]]
-		component = VMobject().set_points_as_corners(corners)
-		arrow = Line(start = [-0.8, 0.8, 0], end = [(-1.3 - -0.8) * BJT_NPN.ARROW_DIST_RATIO + -0.8, (-1 - 0.8) * BJT_NPN.ARROW_DIST_RATIO + 0.8, 0], buff = 0)
+		corners = np.array([[3, -1, 0], [1.3, -1, 0], [0.8, 0.8, 0], 
+							[1.2, 0.8, 0], [0, 0.8, 0], [0, 2.3, 0], [0, 0.8, 0], [-1.2, 0.8, 0],
+							[-0.8, 0.8, 0], [-1.3, -1, 0], [-3, -1, 0]])
+		gate = VMobject().set_points_as_corners(corners)
+		arrow = Line(start = corners[-3], end = (corners[-2] - corners[-3]) * BJT_NPN.ARROW_DIST_RATIO + corners[-3], buff = 0)
 		arrow.add_tip(tip_shape=ArrowTriangleFilledTip, tip_width = stroke_width / 100. * 4, tip_length = stroke_width / 100. * 4)
 
-		CircuitElementTemplate.__init__(self, 
-								  components=[circle, component, arrow], 
-								  terminalCoords=[	[-3, -1, 0],
-						  							[3, -1, 0],
-						  							[0, 2.3, 0]],
+		_CircuitElementTemplate.__init__(self, 
+								  components=[circle, gate, arrow], 
+								  terminalCoords=[	corners[-1],
+						  							corners[0],
+						  							corners[int(len(corners)/2)]],
 													**kwargs)
 
-class Capacitor(CircuitElementTemplate):
+class Capacitor(_CircuitElementTemplate):
 	HEIGHT_RATIO = 1.5
 	
 	class Terminals(Enum):
@@ -73,13 +73,12 @@ class Capacitor(CircuitElementTemplate):
 		left  = VMobject().set_points_as_corners(cornersLeft)
 		right = VMobject().set_points_as_corners(cornersRight)
 		
-		CircuitElementTemplate.__init__(self, 
+		_CircuitElementTemplate.__init__(self, 
 								  components=[left, right], 
-								  terminalCoords=[	[-1.5, 0, 0],
-						  							[1.5, 0, 0]],
+								  terminalCoords=[cornersLeft[0], cornersRight[0]],
 													**kwargs)
 
-class Resistor(CircuitElementTemplate):
+class Resistor(_CircuitElementTemplate):
 	SPREAD_RATIO = 1.25
 	
 	class Terminals(Enum):
@@ -97,8 +96,7 @@ class Resistor(CircuitElementTemplate):
 		
 		component = VMobject().set_points_as_corners(corners)
 
-		CircuitElementTemplate.__init__(self, 
+		_CircuitElementTemplate.__init__(self, 
 								  components=[component], 
-								  terminalCoords=[	[Resistor.SPREAD_RATIO * -2, 0, 0],
-						  							[Resistor.SPREAD_RATIO * 2, 0, 0]],
+								  terminalCoords=[corners[0], corners[-1]],
 													**kwargs)

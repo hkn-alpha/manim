@@ -10,6 +10,8 @@ class test(Scene):
 		c = Capacitor()
 		bjt_npn = BJT_NPN(color = GREEN)
 
+		self.wait(0.1)
+
 		self.play(Create(bjt_npn))
 		self.play(bjt_npn.animate.
 			scale(0.6).
