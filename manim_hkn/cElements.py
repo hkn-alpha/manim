@@ -1,12 +1,17 @@
+"""
+Specialized VMobjects for Circuit Elements, abbreviated as cElems.
+Custom VMobjects are all built entirely natively using VMobject Cubic Bezier Rendering
+"""
+
 from manim import VMobject
 from manim.mobject.geometry.arc import Dot
 from manim.animation.animation import override_animation
 from manim.animation.creation import Create, ShowPartial
-from manim.animation.composition import AnimationGroup
 from manim.constants import *
-from manim.utils.color.manim_colors import *
+from manim.utils.color.manim_colors import WHITE
 import numpy as np
 
+# Template class for all Cubic-Bezier Vectorized Circuit Elements
 class _CircuitElementTemplate(VMobject):
 	def __init__(self,
 			  terminalCoords: dict[str, list[float]],
@@ -17,7 +22,16 @@ class _CircuitElementTemplate(VMobject):
 		kwargs['cap_style'] 	= kwargs.get('cap_style', CapStyleType.ROUND)	
 
 		self._terminal_scale_factor = 0.5
-		self._terminals:dict[str, Dot] = {terminal_name: Dot(radius=self._terminal_scale_factor * kwargs['stroke_width']/200., color=kwargs['color'].invert(), fill_opacity=0).shift(terminalCoords[terminal_name]) for terminal_name in terminalCoords}
+
+		self._terminals:dict[str, Dot] = {
+			terminal_name:
+				Dot(
+					radius			= self._terminal_scale_factor * kwargs['stroke_width']/200.,
+					color			= kwargs['color'].invert(),
+					fill_opacity	= 0)
+				.shift(terminalCoords[terminal_name])
+			for terminal_name in terminalCoords
+		}
 		for dot in self._terminals.values():
 			dot.set_stroke(opacity=0)
 
@@ -29,13 +43,15 @@ class _CircuitElementTemplate(VMobject):
 			VMobject.set_stroke(self, width=100.*list(self._terminals.values())[0].width / self._terminal_scale_factor)
 		self.add_updater(_update_width)
 
+	# Set stroke override. With this, and the updater added to circuit elements in __init__, we enable scaling of an element to also scale the width accordingly, while also enabling scaling width in isolation.
 	def set_stroke(self, *args, width:float = None, **kwargs):
 		if width is not None and width != 0.:
 			self._terminal_scale_factor = list(self._terminals.values())[0].width / (width/100.)
 		VMobject.set_stroke(self, *args, **kwargs)
 
+	# Helper methods which generate and add the necessary bezier curves to define some common geometries. These become extremely useful when generating complex geometries.
 	def _add_geom_arc(	self,
-				   		start_angle:float 	= 0,
+				   		start_angle:float	= 0,
 				   		angle:float 		= PI / 2,
 						center:list[float]	= ORIGIN,
 						radius:float = 1):
@@ -76,21 +92,21 @@ class _CircuitElementTemplate(VMobject):
 				arrays[3][i]
 			)
 	def _add_geom_circle(	self,
-							center:List[float]	= ORIGIN,
+							center:list[float]	= ORIGIN,
 							radius:float = 1):
 		self._add_geom_arc(radius=radius, center=center, angle=TAU)
 	def _add_geom_linear_path(	self,
-						   		vertices:List[List[float]]):
+						   		vertices:list[list[float]]):
 		self.start_new_path(np.array(vertices[0]))
 		self.add_points_as_corners([np.array(vertex) for vertex in vertices[1:]])
 	def _add_geom_polygram(	self,
-							*vertex_groups:List[List[float]]):
+							*vertex_groups:list[list[float]]):
 		for vertex_group in vertex_groups:
 			self._add_geom_linear_path(vertex_group)
 	def _add_geom_pointer(
 			self,
-			tip_coord:List[float]=ORIGIN,
-			target_coord:List[float]=ORIGIN,
+			tip_coord:list[float]=ORIGIN,
+			target_coord:list[float]=ORIGIN,
 			width:float=0.5,
 			length:float=0.7,
 			pointer_notch_depth_ratio:float=0.3):
@@ -109,19 +125,30 @@ class _CircuitElementTemplate(VMobject):
 			tip_coord
 		])
 
+	# When adding bezier curves and defining the geometry of a circuit element, this is a useful method to close any unclosed bezier curves in the internal points list.
 	def _close_last_curve(self):
 		if len(self.points) % 4 != 0:
 			last_anchor = self.get_start_anchors()[-1]
 			for _ in range(4 - (len(self.points) % 4)):
 				self.append_points([last_anchor])
 
-	def get_terminal_coord(self, terminal_name: str):
+	# Returns the coordinate of the specified terminal
+	def get_terminal_coord(self, terminal_name: str) -> list[float]:
 		return self._terminals[terminal_name].get_center()
-	def connect_terminals(self, source_terminal_name: str, dest: "_CircuitElementTemplate", dest_terminal_name: str):
+	# Returns a shift transformation that shifts two circuit elements such that the specified terminals are "connected"
+	# ex: 	capacitor.connect_terminals('left', resistor, 'right'))
+	#		will shift the capacitor over to the location such that the left terminal of the capacitor and right terminal of the resistor to overlap and appear connected
+	def connect_terminals(
+			self,
+			source_terminal_name: str,
+			dest: "_CircuitElementTemplate",
+			dest_terminal_name: str
+			):
 		return self.shift(dest.get_terminal_coord(dest_terminal_name) - self.get_terminal_coord(source_terminal_name))
-	
+
+	# Override the Create animation such that Terminals do not consume runtime. Not including this override causes a significant portion of the create animation runtime to be spent waiting, with no change on the screen due to invisible terminals
 	@override_animation(Create)
-	def create(self, lag_ratio:float = 0, *args, **kwargs) -> AnimationGroup:
+	def create(self, lag_ratio:float = 0, *args, **kwargs) -> ShowPartial:
 		return type('_Create_No_Lag', (ShowPartial,),{
 			'_get_bounds': lambda self, alpha: (0, alpha)
 		})(
@@ -132,8 +159,12 @@ class _CircuitElementTemplate(VMobject):
 		)
 
 class BJT_NPN(_CircuitElementTemplate):
+	# Defines how far down the emmitter trace on the diagram the arrow tip is located
 	_ARROW_DIST_RATIO = 0.7
+	# Defines the width of the arrow (not including its stroke thickness) relative to the stroke width of the BJT
 	_ARROW_WIDTH_RATIO = 2.6
+	# Defines the length of the arrow (not including its stroke thickness) relative to the stroke width of the BJT
+	# Defined in terms of _ARROW_WIDTH_RATIO to make scaling easier
 	_ARROW_LENGTH_RATIO = 1.1 * _ARROW_WIDTH_RATIO
 
 	def __init__(self, **kwargs):
@@ -160,8 +191,11 @@ class BJT_NPN(_CircuitElementTemplate):
 		)
 	
 	def generate_points(self) -> None:
+		# Main BJT Circle
 		self._add_geom_circle(radius=self.stroke_width / 8.)
+		# Main BJT Gate, Collector, Emitter geometry
 		self._add_geom_polygram(*self._polygram)
+		# Arrow indicating NPN BJT
 		self._add_geom_pointer(
 			tip_coord = (np.array(self._polygram[2][1])-np.array(self._polygram[2][0])) * BJT_NPN._ARROW_DIST_RATIO + self._polygram[2][0],
 			target_coord = self._polygram[2][1],
@@ -171,9 +205,11 @@ class BJT_NPN(_CircuitElementTemplate):
 		)
 		
 class Capacitor(_CircuitElementTemplate):
+	# This ratio is used for the following geometric equality: <Capacitor Height> = 2/3 * HEIGHT_RATIO * <Capacitor Width>
 	HEIGHT_RATIO = 1.5
 
 	def __init__(self, **kwargs):
+		# Define polygram for Capacitor shape
 		self._polygram  = [
 			[
 				[-1.5, 0, 0],
@@ -202,9 +238,12 @@ class Capacitor(_CircuitElementTemplate):
 		self._add_geom_polygram(*self._polygram)
 
 class Resistor(_CircuitElementTemplate):
+	# This ratio is used for the following geometric equality: <Resistor Width> = 2 * SPREAD_RATIO * <Resistor Height>
+	# In other words, this is defined by SPREAD_RATIO = 0.5 * <Resistor Width> / <Resistor Height
 	SPREAD_RATIO = 1.25
 
 	def __init__(self, **kwargs):
+		# Generating vertices for Resistor
 		self._vertices = [[Resistor.SPREAD_RATIO*(-2),  0, 0]]
 		for i in range(-1, 1+1, 1):
 			self._vertices.extend([[Resistor.SPREAD_RATIO*(i-0.5),  0, 0],
@@ -221,6 +260,6 @@ class Resistor(_CircuitElementTemplate):
 			},
 			**kwargs
 		)
-		
+	
 	def generate_points(self) -> None:
 		self._add_geom_linear_path(self._vertices)
