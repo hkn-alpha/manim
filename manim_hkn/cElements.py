@@ -74,6 +74,29 @@ class _CircuitElementTemplate(VMobject):
 							*vertex_groups:List[List[float]]):
 		for vertex_group in vertex_groups:
 			self._add_geom_linear_path(vertex_group)
+	def _add_geom_pointer(
+			self,
+			tip_coord:List[float]=ORIGIN,
+			target_coord:List[float]=ORIGIN,
+			width:float=0.5,
+			length:float=0.7,
+			pointer_notch_depth_ratio:float=0.3):
+		triangle_direction_vector = (np.array(target_coord)-np.array(tip_coord)) / np.linalg.norm(np.array(target_coord)-np.array(tip_coord))
+		triangle_orthogonal_vector = np.array([triangle_direction_vector[1], -triangle_direction_vector[0], 0])
+		self._add_geom_linear_path([
+			tip_coord,
+			tip_coord
+				- triangle_direction_vector  * length
+				+ triangle_orthogonal_vector * width / 2,
+			tip_coord
+				- triangle_direction_vector  * length * (1 - pointer_notch_depth_ratio),
+			tip_coord
+				- triangle_direction_vector  * length
+				- triangle_orthogonal_vector * width / 2,
+			tip_coord
+		])
+		print(triangle_orthogonal_vector * width / 2)
+
 	def _close_last_curve(self):
 		if len(self.points) % 4 != 0:
 			last_anchor = self.get_start_anchors()[-1]
@@ -87,8 +110,8 @@ class _CircuitElementTemplate(VMobject):
 	
 class BJT_NPN(_CircuitElementTemplate):
 	_ARROW_DIST_RATIO = 0.7
-	_TRIANGLE_WIDTH_RATIO = 2.5
-	_TRIANGLE_ASPECT_RATIO = 1.2
+	_ARROW_WIDTH_RATIO = 2.6
+	_ARROW_LENGTH_RATIO = 1.1 * _ARROW_WIDTH_RATIO
 
 	def __init__(self, **kwargs):
 		kwargs['joint_type'] 	= kwargs.get('joint_type', LineJointType.MITER)
@@ -102,28 +125,12 @@ class BJT_NPN(_CircuitElementTemplate):
 			[[	-1.3,	-1,		0], [	-2.5,	-1,		0]],
 			[[	1.3,	-1,		0], [	2.5,	-1,		0]]
 		]
-		#define triangle
-		triangle_direction_vector = np.array(self._polygram[2][1])-np.array(self._polygram[2][0])
-		triangle_orthogonal_vector = np.array([triangle_direction_vector[1], -triangle_direction_vector[0], 0])
-		triangle_direction_vector_normalized = triangle_direction_vector / np.linalg.norm(triangle_direction_vector)
-		triangle_orthogonal_vector_normalized = triangle_orthogonal_vector / np.linalg.norm(triangle_orthogonal_vector)
-		print(np.linalg.norm(triangle_direction_vector), triangle_direction_vector,triangle_direction_vector_normalized)
-		self._polygram.append([
-			self._polygram[2][0] + triangle_direction_vector  * BJT_NPN._ARROW_DIST_RATIO,
-			self._polygram[2][0] + triangle_direction_vector  * BJT_NPN._ARROW_DIST_RATIO
-				- triangle_direction_vector_normalized  * 0.15 * BJT_NPN._TRIANGLE_WIDTH_RATIO * np.sqrt(3)/2 * BJT_NPN._TRIANGLE_ASPECT_RATIO
-				+ triangle_orthogonal_vector_normalized * 0.15 * BJT_NPN._TRIANGLE_WIDTH_RATIO * 1/2,
-			self._polygram[2][0] + triangle_direction_vector  * BJT_NPN._ARROW_DIST_RATIO
-				- triangle_direction_vector_normalized  * 0.15 * BJT_NPN._TRIANGLE_WIDTH_RATIO * np.sqrt(3)/2 * BJT_NPN._TRIANGLE_ASPECT_RATIO
-				- triangle_orthogonal_vector_normalized * 0.15 * BJT_NPN._TRIANGLE_WIDTH_RATIO * 1/2,
-			self._polygram[2][0] + triangle_direction_vector  * BJT_NPN._ARROW_DIST_RATIO
-		])
 
 		_CircuitElementTemplate.__init__(
 			self,  
 			terminalCoords={
-				'collector'	: self._polygram[-2][1],
-				'emitter'	: self._polygram[-3][1],
+				'collector'	: self._polygram[-1][1],
+				'emitter'	: self._polygram[-2][1],
 				'gate'		: self._polygram[1][1]
 			},
 			**kwargs
@@ -132,6 +139,13 @@ class BJT_NPN(_CircuitElementTemplate):
 	def generate_points(self) -> None:
 		self._add_geom_circle(radius=self.stroke_width / 8.)
 		self._add_geom_polygram(*self._polygram)
+		self._add_geom_pointer(
+			tip_coord = (np.array(self._polygram[2][1])-np.array(self._polygram[2][0])) * BJT_NPN._ARROW_DIST_RATIO + self._polygram[2][0],
+			target_coord = self._polygram[2][1],
+			width = BJT_NPN._ARROW_WIDTH_RATIO * self.stroke_width / 100,
+			length = BJT_NPN._ARROW_LENGTH_RATIO * self.stroke_width / 100,
+			pointer_notch_depth_ratio = 0
+		)
 		
 class Capacitor(_CircuitElementTemplate):
 	HEIGHT_RATIO = 1.5
