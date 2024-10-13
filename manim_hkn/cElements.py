@@ -13,7 +13,7 @@ class _CircuitElementTemplate(VMobject):
 		kwargs['cap_style'] 	= kwargs.get('cap_style', CapStyleType.ROUND)	
 
 		self._terminal_scale_factor = 0.5
-		self._terminals:Dict[str, Dot] = {terminal_name: Dot(radius=self._terminal_scale_factor * kwargs['stroke_width']/200., color=kwargs['color']).shift(terminalCoords[terminal_name]) for terminal_name in terminalCoords}
+		self._terminals:Dict[str, Dot] = {terminal_name: Dot(radius=self._terminal_scale_factor * kwargs['stroke_width']/200., color=WHITE-kwargs['color'], fill_opacity=0).shift(terminalCoords[terminal_name]) for terminal_name in terminalCoords}
 
 		VMobject.__init__(self,	**kwargs)
 		
@@ -95,7 +95,6 @@ class _CircuitElementTemplate(VMobject):
 				- triangle_orthogonal_vector * width / 2,
 			tip_coord
 		])
-		print(triangle_orthogonal_vector * width / 2)
 
 	def _close_last_curve(self):
 		if len(self.points) % 4 != 0:
@@ -108,6 +107,17 @@ class _CircuitElementTemplate(VMobject):
 	def connect_terminals(self, source_terminal_name: str, dest: "_CircuitElementTemplate", dest_terminal_name: str):
 		return self.shift(dest.get_terminal_coord(dest_terminal_name) - self.get_terminal_coord(source_terminal_name))
 	
+	@override_animation(Create)
+	def create(self, lag_ratio:float = 0, *args, **kwargs) -> AnimationGroup:
+		return type('_Create_No_Lag', (ShowPartial,),{
+			'_get_bounds': lambda self, alpha: (0, alpha)
+		})(
+			self,
+			lag_ratio=lag_ratio,
+			introducer=True,
+			*args, **kwargs
+		)
+
 class BJT_NPN(_CircuitElementTemplate):
 	_ARROW_DIST_RATIO = 0.7
 	_ARROW_WIDTH_RATIO = 2.6

@@ -9,7 +9,7 @@ class test(Scene):
 
 		self.wait(0.1)
 
-		self.play(Create(bjt_npn, run_time=1))
+		self.play(Create(bjt_npn, run_time=2))
 		self.play(bjt_npn.animate.
 			scale(0.6).
 			shift(2.5 * DOWN + LEFT))
