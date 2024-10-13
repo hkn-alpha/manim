@@ -16,6 +16,10 @@ class test(Scene):
 
 		self.play(Create(r))
 		self.play(r.animate.
+			set_stroke(width=60))
+		self.play(r.animate.
+			set_stroke(width=15))
+		self.play(r.animate.
 			scale(0.6).
 			shift(3 * LEFT + 2 * UP))
 

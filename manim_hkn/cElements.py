@@ -1,11 +1,15 @@
-from manim import *
-from enum import Enum
+from manim import VMobject
+from manim.mobject.geometry.arc import Dot
+from manim.animation.animation import override_animation
+from manim.animation.creation import Create, ShowPartial
+from manim.animation.composition import AnimationGroup
+from manim.constants import *
+from manim.utils.color.manim_colors import *
 import numpy as np
 
 class _CircuitElementTemplate(VMobject):
 	def __init__(self,
-			  terminalCoords: Dict[str, List[float]],
-			  components:List[VMobject]=None, 
+			  terminalCoords: dict[str, list[float]],
 			  **kwargs):
 		kwargs['stroke_width'] 	= kwargs.get('stroke_width', 15)
 		kwargs['color'] 		= kwargs.get('color', WHITE)
@@ -13,18 +17,27 @@ class _CircuitElementTemplate(VMobject):
 		kwargs['cap_style'] 	= kwargs.get('cap_style', CapStyleType.ROUND)	
 
 		self._terminal_scale_factor = 0.5
-		self._terminals:Dict[str, Dot] = {terminal_name: Dot(radius=self._terminal_scale_factor * kwargs['stroke_width']/200., color=WHITE-kwargs['color'], fill_opacity=0).shift(terminalCoords[terminal_name]) for terminal_name in terminalCoords}
+		self._terminals:dict[str, Dot] = {terminal_name: Dot(radius=self._terminal_scale_factor * kwargs['stroke_width']/200., color=kwargs['color'].invert(), fill_opacity=0).shift(terminalCoords[terminal_name]) for terminal_name in terminalCoords}
+		for dot in self._terminals.values():
+			dot.set_stroke(opacity=0)
 
 		VMobject.__init__(self,	**kwargs)
 		
 		self.add(*self._terminals.values())
 
-		self.add_updater(lambda cElem: cElem.set_stroke_width(100.*list(cElem._terminals.values())[0].width / self._terminal_scale_factor))
+		def _update_width(self):
+			VMobject.set_stroke(self, width=100.*list(self._terminals.values())[0].width / self._terminal_scale_factor)
+		self.add_updater(_update_width)
+
+	def set_stroke(self, *args, width:float = None, **kwargs):
+		if width is not None and width != 0.:
+			self._terminal_scale_factor = list(self._terminals.values())[0].width / (width/100.)
+		VMobject.set_stroke(self, *args, **kwargs)
 
 	def _add_geom_arc(	self,
 				   		start_angle:float 	= 0,
 				   		angle:float 		= PI / 2,
-						center:List[float]	= ORIGIN,
+						center:list[float]	= ORIGIN,
 						radius:float = 1):
 		self._close_last_curve()
 		
@@ -187,7 +200,6 @@ class Capacitor(_CircuitElementTemplate):
 		
 	def generate_points(self) -> None:
 		self._add_geom_polygram(*self._polygram)
-
 
 class Resistor(_CircuitElementTemplate):
 	SPREAD_RATIO = 1.25
