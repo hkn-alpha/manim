@@ -1,6 +1,6 @@
 For HKN Backend Package Developers
 ==================================
-General Development Guide for contributers.
+General Development Guide for contributors.
 # Overview
 This Development Guide contains the general guidelines for an HKN Member contributing to the backend of the manim_hkn package, which serves as a wrapper for the manim community version, specially equipped for HKN Alpha video animations. More details can be found in the [repository README](https://github.com/hkn-alpha/manim/blob/main/README.md). This Development Guide is for developers adding new circuit elements and functionality to the package.
 ## Prerequisites

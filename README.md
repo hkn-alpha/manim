@@ -1,4 +1,3 @@
-# manim
-
-python -m manim -p examples/test.py -o testVideo
-To render the scene in test.py at 1080p and 60fps and store it in media/videos/test/480p15/testVideo.mp4
+manim_hkn
+=========
+[manim Community Version](https://docs.manim.community/en/stable/index.html#) wrapper package abstracting various Circuit Elements for animation of HKN ECE educational videos. These elements are built on top of the manim community version, and all inherit from the manim `VMobject` type. To build animations, refer to the [manim Community Tutorials and Guides](https://docs.manim.community/en/stable/tutorials_guides.html) page, to learn how to build manim animations. The objects defined in this package are `VMobject`s, and can be integrated as such.
