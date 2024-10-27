@@ -263,3 +263,14 @@ class Resistor(_CircuitElementTemplate):
 	
 	def generate_points(self) -> None:
 		self._add_geom_linear_path(self._vertices)
+
+class Wire(_CircuitElementTemplate):
+	def __init__(self, **kwargs):
+		_CircuitElementTemplate.__init__(
+			self, 
+			terminalCoords={},
+			**kwargs
+		)
+	def generate_points(self) -> None:
+		# self._add_geom_linear_path(self._vertices)
+		None
