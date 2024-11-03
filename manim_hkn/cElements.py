@@ -323,4 +323,5 @@ class Wire(_CircuitElementTemplate):
 		self._target_coordinates[key] = coord
 		self._terminals[key].shift(
 			self._target_coordinates[key] - 
-			self._terminals[key].get_center()) 
+			self._terminals[key].get_center())
+		self._update_shape()
