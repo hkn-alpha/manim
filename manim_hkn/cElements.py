@@ -4,6 +4,7 @@ Custom VMobjects are all built entirely natively using VMobject Cubic Bezier Ren
 """
 
 from manim import VMobject
+from manim_hkn.terminal import Terminal
 from manim.mobject.geometry.arc import Dot
 from manim.animation.animation import override_animation
 from manim.animation.creation import Create, ShowPartial
@@ -24,9 +25,9 @@ class _CircuitElementTemplate(VMobject):
 
 		self._terminal_scale_factor = 0.5
 
-		self._terminals:dict[str, Dot] = {
+		self._terminals:dict[str, Terminal] = {
 			terminal_name:
-				Dot(
+				Terminal(
 					radius			= self._terminal_scale_factor * kwargs['stroke_width']/200.,
 					color			= kwargs['color'].invert(),
 					fill_opacity	= 0)
