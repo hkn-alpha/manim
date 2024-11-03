@@ -1,14 +1,15 @@
 from manim import *
+from manim_hkn.terminal import Terminal
 from manim_hkn.cElements import Wire, _CircuitElementTemplate
 
-def connect_with_straight_wire(left_cElem:_CircuitElementTemplate, left_terminal:Dot, right_cElem:_CircuitElementTemplate, right_terminal:Dot):
+def connect_with_straight_wire(left_cElem:_CircuitElementTemplate, left_terminal:Terminal, right_cElem:_CircuitElementTemplate, right_terminal:Terminal):
 	wire = Wire()
 	if left_cElem is not None and left_terminal is not None:
 		wire.bind_terminal('left',  left_cElem,  left_terminal,  X_AXIS+Y_AXIS+Z_AXIS)
 	if right_cElem is not None and right_terminal is not None:
 		wire.bind_terminal('right', right_cElem, right_terminal, X_AXIS+Y_AXIS+Z_AXIS)
 	return wire
-def connect_with_square_wire(x_cElem:_CircuitElementTemplate, x_terminal:Dot, y_cElem:_CircuitElementTemplate, y_terminal:Dot, animation_start:str = 'x'):
+def connect_with_square_wire(x_cElem:_CircuitElementTemplate, x_terminal:Terminal, y_cElem:_CircuitElementTemplate, y_terminal:Terminal, animation_start:str = 'x'):
 	if animation_start != 'x' and animation_start != 'y':
 		raise ValueError('Animation start must be either \'x\' or \'y\', corresponding to which terminal to start geometry generation at so that the user can specify create animation behaviors.')
 

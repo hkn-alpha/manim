@@ -5,7 +5,6 @@ Custom VMobjects are all built entirely natively using VMobject Cubic Bezier Ren
 
 from manim import VMobject
 from manim_hkn.terminal import Terminal
-from manim.mobject.geometry.arc import Dot
 from manim.animation.animation import override_animation
 from manim.animation.creation import Create, ShowPartial
 from manim.constants import *
@@ -29,13 +28,12 @@ class _CircuitElementTemplate(VMobject):
 			terminal_name:
 				Terminal(
 					radius			= self._terminal_scale_factor * kwargs['stroke_width']/200.,
-					color			= kwargs['color'].invert(),
-					fill_opacity	= 0)
+					color			= kwargs['color'].invert())
 				.shift(terminalCoords[terminal_name])
 			for terminal_name in terminalCoords
 		}
-		for dot in self._terminals.values():
-			dot.set_stroke(opacity=0)
+		for terminal in self._terminals.values():
+			terminal.set_stroke(opacity=0)
 
 		VMobject.__init__(self,	**kwargs)
 		
@@ -282,7 +280,7 @@ class Wire(_CircuitElementTemplate):
 			**kwargs
 		)
 
-		self._terminal_bindings:dict[str, list[ Dot]] = {
+		self._terminal_bindings:dict[str, list[ Terminal]] = {
 			key : [None, None, None] for key in self._terminals.keys()
 		}
 
