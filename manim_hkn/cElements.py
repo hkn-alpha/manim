@@ -8,6 +8,7 @@ from manim.mobject.geometry.arc import Dot
 from manim.animation.animation import override_animation
 from manim.animation.creation import Create, ShowPartial
 from manim.constants import *
+from manim.typing import Vector3D
 from manim.utils.color.manim_colors import WHITE
 import numpy as np
 
@@ -269,11 +270,57 @@ class Resistor(_CircuitElementTemplate):
 
 class Wire(_CircuitElementTemplate):
 	def __init__(self, **kwargs):
+		self._target_coordinates:dict[str, list[float]] = {
+				'left'  : [-1, 0, 0],
+				'right' : [ 1, 0, 0]
+			}
+		
 		_CircuitElementTemplate.__init__(
-			self, 
-			terminalCoords={},
+			self,
+			terminalCoords=self._target_coordinates,
 			**kwargs
 		)
+
+		self._terminal_bindings:dict[str, list[ Dot]] = {
+			key : [None, None, None] for key in self._terminals.keys()
+		}
+
+		self.add_updater(Wire._update_shape, call_updater=True)
+
+	def _update_shape(self:"Wire"):
+		self._target_coordinates = {
+				key : np.array([(self._terminal_bindings[key][i] or self._terminals[key]).get_center()[i]
+				for i in range(3)])
+				for key in self._terminals.keys()}
+		for key in self._terminals.keys():
+			self._terminals[key].shift(
+				self._target_coordinates[key] - 
+				self._terminals[key].get_center()) 
+		self.generate_points()
+
+	def bind_terminal(
+			self, 
+			source_terminal:str, 
+			dest:_CircuitElementTemplate,
+			dest_terminal:str,
+			bind_axes=Vector3D) -> None:
+		if source_terminal not in self._terminal_bindings:
+			raise ValueError(f'Invalid Source Terminal: {source_terminal}.')
+		
+		for i in range(3):
+			if bind_axes[i] != 0:
+				if bind_axes[i] != 1:
+					raise ValueError(f'Invalid Axis: {bind_axes}, each element of the axis must be either 0 or 1.')
+				self._terminal_bindings[source_terminal][i] = dest._terminals[dest_terminal]
+
+		self._update_shape()
+
 	def generate_points(self) -> None:
-		# self._add_geom_linear_path(self._vertices)
-		None
+		self.clear_points()
+		self._add_geom_linear_path([self._target_coordinates[key] for key in self._terminals.keys()])
+
+	def set_terminal_coordinate(self, key:str, coord:list[float]):
+		self._target_coordinates[key] = coord
+		self._terminals[key].shift(
+			self._target_coordinates[key] - 
+			self._terminals[key].get_center()) 
