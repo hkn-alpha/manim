@@ -135,9 +135,12 @@ class _CircuitElementTemplate(VMobject):
 	# Returns the coordinate of the specified terminal
 	def get_terminal_coord(self, terminal_name: str) -> list[float]:
 		return self._terminals[terminal_name].get_center()
-	# Returns a shift transformation that shifts two circuit elements such that the specified terminals are "connected"
-	# ex: 	capacitor.connect_terminals('left', resistor, 'right'))
-	#		will shift the capacitor over to the location such that the left terminal of the capacitor and right terminal of the resistor to overlap and appear connected
+	
+	"""
+	Returns a shift transformation that shifts two circuit elements such that the specified terminals are "connected"
+	ex: capacitor.connect_terminals('left', resistor, 'right'))
+		will shift the capacitor over to the location such that the left terminal of the capacitor and right terminal of the resistor to overlap and appear connected
+	"""
 	def connect_terminals(
 			self,
 			source_terminal_name: str,
