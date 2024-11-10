@@ -6,7 +6,7 @@ class test(Scene):
 	def construct(self):
 		self.wait(0.1)
 
-		r1 = Resistor()
+		r1 = Battery()
 		r2 = Resistor()
 		c = Capacitor()
 		bjt_npn = BJT_NPN()
@@ -18,8 +18,8 @@ class test(Scene):
 		c.shift(RIGHT*3).rotate(-PI/2).scale(0.5)
 
 		hw1,vw1=connect_with_square_wire(c, 'left', bjt_npn, 'collector', 'y')
-		hw2,vw2=connect_with_square_wire(c, 'right', r1, 'left', 'x')
-		hw3,vw3=connect_with_square_wire(r2, 'left', r1, 'right', 'y')
+		hw2,vw2=connect_with_square_wire(c, 'right', r1, 'negative', 'x')
+		hw3,vw3=connect_with_square_wire(r2, 'left', r1, 'positive', 'y')
 		hw4,vw4=connect_with_square_wire(r2, 'right', bjt_npn, 'emitter', 'x')
 		cElems = [bjt_npn,hw1,vw1,c,vw2,hw2,r1,hw3,vw3,r2,vw4,hw4]
 
@@ -50,7 +50,8 @@ class test(Scene):
 			cElem.update()
 			self.play(Create(cElem))
 
-		self.play(bjt_npn.animate.shift(DOWN*0.5+LEFT),
+		self.play(
+			bjt_npn.animate.shift(DOWN*0.5+LEFT),
 			c.animate.shift(RIGHT),
 			r2.animate.shift(DOWN),
 			r1.animate.shift(DOWN+LEFT),
@@ -60,5 +61,6 @@ class test(Scene):
 		g = Group(*cElems)
 		self.play(g.animate.scale(0.4).shift(LEFT+DOWN))
 		self.play(g.animate.scale(2).shift(LEFT+UP))
-
+		self.play(c.animate.shift(RIGHT))
+		
 		self.wait(0.1)

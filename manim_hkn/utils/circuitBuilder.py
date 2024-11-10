@@ -1,4 +1,4 @@
-from manim import *
+from manim.constants import X_AXIS, Y_AXIS, Z_AXIS
 from manim_hkn.terminal import Terminal
 from manim_hkn.cElements import Wire, _CircuitElementTemplate
 

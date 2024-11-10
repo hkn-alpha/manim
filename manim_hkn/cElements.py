@@ -4,12 +4,12 @@ Custom VMobjects are all built entirely natively using VMobject Cubic Bezier Ren
 """
 
 from manim import VMobject
-from manim_hkn.terminal import Terminal
 from manim.animation.animation import override_animation
 from manim.animation.creation import Create, ShowPartial
-from manim.constants import *
-from manim.typing import Vector3D
+from manim.constants import LineJointType, CapStyleType, ORIGIN, PI, TAU, RIGHT, UP, LEFT, DOWN
 from manim.utils.color.manim_colors import WHITE
+from manim.typing import Vector3D
+from manim_hkn.terminal import Terminal
 import numpy as np
 
 # Template class for all Cubic-Bezier Vectorized Circuit Elements
@@ -196,7 +196,7 @@ class BJT_NPN(_CircuitElementTemplate):
 			length = BJT_NPN._ARROW_LENGTH_RATIO * self.stroke_width / 100,
 			pointer_notch_depth_ratio = 0
 		)
-		
+
 class Capacitor(_CircuitElementTemplate):
 	# This ratio is used for the following geometric equality: <Capacitor Height> = 2/3 * HEIGHT_RATIO * <Capacitor Width>
 	HEIGHT_RATIO:float = 1.5
@@ -227,6 +227,32 @@ class Capacitor(_CircuitElementTemplate):
 		)
 		
 	def generate_points(self:"Capacitor") -> None:
+		self._add_geom_polygram(*self._polygram)
+
+class Battery(_CircuitElementTemplate):
+	def __init__(self:"Battery", **kwargs) -> None:
+		self._polygram:list[list[list[float]]] = [
+			[
+				[-2,0,0],
+				[-0.5,0,0],
+				[-0.5,1,0],
+				[-0.5,-1,0]
+			],[
+				[2,0,0],
+				[0.5,0,0],
+				[0.5,2,0],
+				[0.5,-2,0]
+			]
+		]
+		super().__init__(
+			terminalCoords={
+				'positive'	: self._polygram[1][0],
+				'negative'	: self._polygram[0][0]
+			},
+			**kwargs
+		)
+		
+	def generate_points(self) -> None:
 		self._add_geom_polygram(*self._polygram)
 
 class Resistor(_CircuitElementTemplate):

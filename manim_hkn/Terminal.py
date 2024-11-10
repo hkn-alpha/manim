@@ -1,5 +1,8 @@
-from manim import *
+import numpy as np
+from manim import Dot
 from manim.typing import Vector3D, Point3D
+from manim.constants import ORIGIN
+from manim.utils.color.manim_colors import BLUE
 from functools import reduce
 import operator as op
 
@@ -14,32 +17,6 @@ class Terminal(Dot):
 		self._terminal_center:Point3D = ORIGIN
 
 		Dot.__init__(self, *args, **kwargs)
-	
-	def shift(self, *vectors: Vector3D) -> "Terminal":
-		"""Shift by the given vectors.
-
-		Parameters
-		----------
-		vectors
-			Vectors to shift by. If multiple vectors are given, they are added
-			together.
-
-		Returns
-		-------
-		:class:`Mobject`
-			``self``
-
-		See also
-		--------
-		:meth:`move_to`
-		"""
-
-		total_vector = reduce(op.add, vectors)
-		for mob in self.family_members_with_points():
-			mob.points = mob.points.astype("float")
-			mob.points += total_vector
-
-		return self
 	
 	def generate_points(self) -> None:
 		super().generate_points()
