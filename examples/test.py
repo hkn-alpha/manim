@@ -58,7 +58,7 @@ class test(Scene):
 			w1.animate.shift(DOWN))
 		
 		g = Group(*cElems)
-		self.play(g.animate.scale(0.4))
-		self.play(g.animate.scale(2))
+		self.play(g.animate.scale(0.4).shift(LEFT+DOWN))
+		self.play(g.animate.scale(2).shift(LEFT+UP))
 
 		self.wait(0.1)
