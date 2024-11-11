@@ -273,6 +273,23 @@ class Capacitor(_CircuitElementTemplate):
 	def generate_points(self:"Capacitor") -> None:
 		self._add_geom_polygram(*self._polygram)
 
+class Inductor(_CircuitElementTemplate):
+	def __init__(self:"Resistor", **kwargs) -> None:
+		# Generating vertices for Resistor
+		self._add_geom_polygram:list[list[list[float]]] = [
+			[[Resistor.SPREAD_RATIO*(-2),  0, 0],[Resistor.SPREAD_RATIO*(2),  0, 0]]
+		]
+		super().__init__(
+			terminalCoords={
+				'left'	: self._vertices[0],
+				'right'	: self._vertices[-1]
+			},
+			**kwargs
+		)
+	
+	def generate_points(self:"Resistor") -> None:
+		self._add_geom_linear_path(self._vertices)
+
 class Battery(_CircuitElementTemplate):
 	def __init__(self:"Battery", **kwargs) -> None:
 		self._polygram:list[list[list[float]]] = [
