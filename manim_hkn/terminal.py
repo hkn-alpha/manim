@@ -11,7 +11,7 @@ class Terminal(Dot):
 		kwargs['radius'] 			= kwargs.get('radius', 1) / 30.
 		kwargs['stroke_width'] 		= kwargs.get('stroke_width', 0)
 		kwargs['fill_opacity'] 		= kwargs.get('fill_opacity', 0)
-		kwargs['stroke_opacity'] 	= kwargs.get('stroke_opacity', 1)
+		kwargs['stroke_opacity'] 	= kwargs.get('stroke_opacity', 0)
 		kwargs['color']		 		= kwargs.get('color', BLUE.invert()).invert()
 
 		self._terminal_center:Point3D = ORIGIN
