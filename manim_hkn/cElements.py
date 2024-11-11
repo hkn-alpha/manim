@@ -152,6 +152,50 @@ class _CircuitElementTemplate(VMobject):
 			*args, **kwargs
 		)
 
+class OpAmp(_CircuitElementTemplate):
+	def __init__(self:"OpAmp", non_inverting_terminal_on_top:bool = True, include_bias_terminals:bool = False, **kwargs) -> None:
+		triangle_width:float = 3.5 / np.sqrt(3)
+		self._polygram:list[list[list[float]]] = [
+			# input terminals
+			[[-1.75, 1,0],[-2.75, 1, 0]],
+			[[-1.75,-1,0],[-2.75,-1, 0]],
+			# output terminal
+			[[ 1.75, 0,0],[ 2.75, 0, 0]],
+			# symbols
+			[[-1.25, -1.25 + 2.00 * non_inverting_terminal_on_top, 0], [-1.25, -0.75 + 2.00 * non_inverting_terminal_on_top, 0]],
+			[[-1.50, -1.00 + 2.00 * non_inverting_terminal_on_top, 0], [-1.00, -1.00 + 2.00 * non_inverting_terminal_on_top, 0]],
+			[[-1.50,  1.00 - 2.00 * non_inverting_terminal_on_top, 0], [-1.00,  1.00 - 2.00 * non_inverting_terminal_on_top, 0]],
+		]
+		# bias terminals
+		if include_bias_terminals:
+			self._polygram[3:3] = [
+				[[0, triangle_width/2, 0],[0, triangle_width/2 + 1, 0]],
+				[[0,-triangle_width/2, 0],[0, -triangle_width/2 - 1, 0]]
+			]
+
+		super().__init__(
+			terminalCoords={
+				'non-inverting input'	: self._polygram[0][1],
+				'inverting input'		: self._polygram[1][1],
+				'output'				: self._polygram[2][1]
+			} | ({
+				'V+'					: self._polygram[3][1],
+				'V-'					: self._polygram[4][1]
+			} if include_bias_terminals else {}),
+			**kwargs
+		)
+
+	def generate_points(self:"OpAmp") -> None:
+		self._add_geom_pointer(
+			tip_coord	 = self._polygram[2][0],
+			target_coord = self._polygram[2][1],
+			width  = (self._polygram[2][0][0] - self._polygram[0][0][0]) * 2 / np.sqrt(3),
+			length =  self._polygram[2][0][0] - self._polygram[0][0][0],
+			pointer_notch_depth_ratio = 0
+		)
+		self._add_geom_polygram(*self._polygram)
+
+
 class BJT_NPN(_CircuitElementTemplate):
 	# Defines how far down the emmitter trace on the diagram the arrow tip is located
 	_ARROW_DIST_RATIO:float = 0.7
