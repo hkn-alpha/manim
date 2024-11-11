@@ -16,19 +16,21 @@ import numpy as np
 class _CircuitElementTemplate(VMobject):
 	def __init__(self: "_CircuitElementTemplate",
 			  terminalCoords: dict[str, list[float]],
+			  reverse_points: bool = False,
 			  **kwargs) -> None:
 		kwargs['stroke_width'] 	= kwargs.get('stroke_width', 	15)
 		kwargs['color'] 		= kwargs.get('color', 			WHITE)
 		kwargs['joint_type'] 	= kwargs.get('joint_type', 		LineJointType.ROUND)
 		kwargs['cap_style'] 	= kwargs.get('cap_style', 		CapStyleType.ROUND)	
-
+		
 		self._terminal_scale_factor:float = 0.5
-
 		self._terminals:dict[str, Terminal] = {
 			terminal_name:Terminal(radius = kwargs['stroke_width'] * self._terminal_scale_factor, point = terminalCoords[terminal_name])
 			
 			for terminal_name in terminalCoords
 		}
+
+		self._reverse_points = reverse_points
 
 		VMobject.__init__(self,	**kwargs)
 		
@@ -37,6 +39,9 @@ class _CircuitElementTemplate(VMobject):
 		def _update_width(self:"_CircuitElementTemplate"):
 			VMobject.set_stroke(self, width=100.*list(self._terminals.values())[0].width / self._terminal_scale_factor)
 		self.add_updater(_update_width)
+	def generate_points(self:"_CircuitElementTemplate") -> None:
+		if self._reverse_points:
+			self.points = self.points[::-1]
 
 	# Set stroke override. With this, and the updater added to circuit elements in __init__, we enable scaling of an element to also scale the width accordingly, while also enabling scaling width in isolation.
 	def set_stroke(self:"_CircuitElementTemplate", *args, width:float = None, **kwargs) -> "_CircuitElementTemplate":
@@ -52,7 +57,7 @@ class _CircuitElementTemplate(VMobject):
 						radius:float = 1) -> None:
 		self._close_last_curve()
 		
-		num_components:int = 9
+		num_components:int = int(9 * abs(start_angle - angle) / TAU) + 1
 		d_theta:float = angle / (num_components - 1.0)
 
 		anchors:list[list[float]] = np.array(
@@ -83,9 +88,28 @@ class _CircuitElementTemplate(VMobject):
 				arrays[3][i]
 			)
 	def _add_geom_circle(	self:"_CircuitElementTemplate",
+							start_angle:float	= 0,
 							center:list[float]	= ORIGIN,
 							radius:float = 1) -> None:
-		self._add_geom_arc(radius=radius, center=center, angle=TAU)
+		self._add_geom_arc(start_angle, TAU, center, radius)
+	def _add_geom_elliptical_arc(	self:"_CircuitElementTemplate",
+									start_angle:float	= 0,
+									angle:float 		= PI / 2,
+									center:list[float]	= ORIGIN,
+									width:float = 2,
+									height:float = 1) -> None:
+		arc_start_index = len(self.points)
+		self._add_geom_arc(start_angle, angle, ORIGIN, radius = 0.5)
+		for i in range(arc_start_index, len(self.points)):
+			self.points[i][0] *= width
+			self.points[i][1] *= height
+			self.points[i] += center
+	def _add_geom_ellipse(	self:"_CircuitElementTemplate",
+							start_angle:float	= 0,
+							center:list[float]	= ORIGIN,
+							width:float = 2,
+							height:float = 1) -> None:
+		self._add_geom_elliptical_arc(start_angle, TAU, center, width, height)
 	def _add_geom_linear_path(	self:"_CircuitElementTemplate",
 						   		vertices:list[list[float]]) -> None:
 		self.start_new_path(np.array(vertices[0]))
@@ -194,7 +218,7 @@ class OpAmp(_CircuitElementTemplate):
 			pointer_notch_depth_ratio = 0
 		)
 		self._add_geom_polygram(*self._polygram)
-
+		super().generate_points()
 
 class BJT_NPN(_CircuitElementTemplate):
 	# Defines how far down the emmitter trace on the diagram the arrow tip is located
@@ -240,6 +264,7 @@ class BJT_NPN(_CircuitElementTemplate):
 			length = BJT_NPN._ARROW_LENGTH_RATIO * self.stroke_width / 100,
 			pointer_notch_depth_ratio = 0
 		)
+		super().generate_points()
 
 class Capacitor(_CircuitElementTemplate):
 	# This ratio is used for the following geometric equality: <Capacitor Height> = 2/3 * HEIGHT_RATIO * <Capacitor Width>
@@ -272,23 +297,40 @@ class Capacitor(_CircuitElementTemplate):
 		
 	def generate_points(self:"Capacitor") -> None:
 		self._add_geom_polygram(*self._polygram)
+		super().generate_points()
 
 class Inductor(_CircuitElementTemplate):
-	def __init__(self:"Resistor", **kwargs) -> None:
+	# This ratio is used for the following geometric equality: <Inductor Width> = 2 * SPREAD_RATIO * <Inductor Height>
+	# In other words, this is defined by SPREAD_RATIO = 0.5 * <Inductor Width> / <Inductor Height
+	SPREAD_RATIO:float = 1.6
+	# Width of the ellipses forming the upper half of the inductor
+	UPPER_ELLIPSE_SPREAD:float = 1.75
+	def __init__(self:"Inductor", **kwargs) -> None:
 		# Generating vertices for Resistor
-		self._add_geom_polygram:list[list[list[float]]] = [
-			[[Resistor.SPREAD_RATIO*(-2),  0, 0],[Resistor.SPREAD_RATIO*(2),  0, 0]]
+		self._polygram:list[list[list[float]]] = [
+			[[ -2 * Inductor.SPREAD_RATIO,  0, 0],[-1.5 * Inductor.SPREAD_RATIO,  0, 0]],
+			[[1.5 * Inductor.SPREAD_RATIO,  0, 0],[   2 * Inductor.SPREAD_RATIO,  0, 0]]
 		]
 		super().__init__(
 			terminalCoords={
-				'left'	: self._vertices[0],
-				'right'	: self._vertices[-1]
+				'left'	: self._polygram[0][0],
+				'right'	: self._polygram[1][1]
 			},
 			**kwargs
 		)
 	
-	def generate_points(self:"Resistor") -> None:
-		self._add_geom_linear_path(self._vertices)
+	def generate_points(self:"Inductor") -> None:
+		self._add_geom_linear_path(self._polygram[0])
+
+		loop_width:float = (self._polygram[1][0][0] - self._polygram[0][1][0] - Inductor.UPPER_ELLIPSE_SPREAD) / 3
+
+		for i in range(-1,1+1,1):
+			self._add_geom_elliptical_arc(start_angle=PI, angle=-PI, center=RIGHT * (i - 0.5) * loop_width, width=Inductor.UPPER_ELLIPSE_SPREAD, height=2)
+			self._add_geom_elliptical_arc(start_angle=0, angle=-PI, center=RIGHT * (i - 0.0) * loop_width, width=Inductor.UPPER_ELLIPSE_SPREAD - loop_width, height=1.4)
+
+		self._add_geom_elliptical_arc(start_angle=PI, angle=-PI, center=RIGHT * 1.5 * loop_width, width=Inductor.UPPER_ELLIPSE_SPREAD, height=2)
+		self._add_geom_linear_path(self._polygram[1])
+		super().generate_points()
 
 class Battery(_CircuitElementTemplate):
 	def __init__(self:"Battery", **kwargs) -> None:
@@ -315,6 +357,7 @@ class Battery(_CircuitElementTemplate):
 		
 	def generate_points(self) -> None:
 		self._add_geom_polygram(*self._polygram)
+		super().generate_points()
 
 class Resistor(_CircuitElementTemplate):
 	# This ratio is used for the following geometric equality: <Resistor Width> = 2 * SPREAD_RATIO * <Resistor Height>
@@ -325,11 +368,11 @@ class Resistor(_CircuitElementTemplate):
 		# Generating vertices for Resistor
 		self._vertices:list[list[float]] = [[Resistor.SPREAD_RATIO*(-2),  0, 0]]
 		for i in range(-1, 1+1, 1):
-			self._vertices.extend([[Resistor.SPREAD_RATIO*(i-0.5),  0, 0],
-				   			[Resistor.SPREAD_RATIO*(i-0.25),  1, 0],
-							[Resistor.SPREAD_RATIO*(i+0.25), -1, 0],
-							[Resistor.SPREAD_RATIO*(i+0.5),  0, 0]])
-		self._vertices.append([Resistor.SPREAD_RATIO*(2),  0, 0])
+			self._vertices.extend([ [Resistor.SPREAD_RATIO*(i-0.5),  0, 0],
+									[Resistor.SPREAD_RATIO*(i-0.25),  1, 0],
+									[Resistor.SPREAD_RATIO*(i+0.25), -1, 0],
+									[Resistor.SPREAD_RATIO*(i+0.5),  0, 0]])
+		self._vertices.append(		[Resistor.SPREAD_RATIO*(2),  0, 0])
 
 		super().__init__(
 			terminalCoords={
@@ -341,6 +384,7 @@ class Resistor(_CircuitElementTemplate):
 	
 	def generate_points(self:"Resistor") -> None:
 		self._add_geom_linear_path(self._vertices)
+		super().generate_points()
 
 class Wire(_CircuitElementTemplate):
 	def __init__(self:"Wire", **kwargs) -> None:
@@ -389,11 +433,10 @@ class Wire(_CircuitElementTemplate):
 	def generate_points(self:"Wire") -> None:
 		self.clear_points()
 		self._add_geom_linear_path([self._target_coordinates[key] for key in self._terminals.keys()])
+		super().generate_points()
 
 	def set_terminal_coordinate(self:"Wire", key:str, coord:list[float]) -> "Wire":
 		self._target_coordinates[key] = coord
-		print(self._target_coordinates[key],
-			self._terminals[key].get_center())
 		self._terminals[key].shift(
 			self._target_coordinates[key] - 
 			self._terminals[key].get_center())
