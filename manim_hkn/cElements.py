@@ -253,7 +253,7 @@ class BJT_NPN(_CircuitElementTemplate):
 	
 	def generate_points(self:"BJT_NPN") -> None:
 		# Main BJT Circle
-		self._add_geom_circle(radius=self.stroke_width / 8.)
+		self._add_geom_circle(radius=2)
 		# Main BJT Gate, Collector, Emitter geometry
 		self._add_geom_polygram(*self._polygram)
 		# Arrow indicating NPN BJT
@@ -331,6 +331,27 @@ class Inductor(_CircuitElementTemplate):
 		self._add_geom_elliptical_arc(start_angle=PI, angle=-PI, center=RIGHT * 1.5 * loop_width, width=Inductor.UPPER_ELLIPSE_SPREAD, height=2)
 		self._add_geom_linear_path(self._polygram[1])
 		super().generate_points()
+
+class FunctionGenerator(_CircuitElementTemplate):
+	def __init__(self:"FunctionGenerator", **kwargs) -> None:
+		self._polygram = [
+			[[-2,0,0], [-1.5,0,0]],
+			[[ 1.5,0,0], [ 2,0,0]]
+		]
+		super().__init__(
+			terminalCoords={
+				'left'	: self._polygram[0][0],
+				'right'	: self._polygram[1][1]
+			},
+			**kwargs
+		)
+
+	def generate_points(self:"FunctionGenerator"):
+		self._add_geom_linear_path(self._polygram[0])
+		self._add_geom_circle(radius=1.5, start_angle=-PI)
+		self._add_geom_elliptical_arc(start_angle=3*PI/4, angle=-PI/2, center=[-0.75/np.sqrt(2),-2.5/np.sqrt(2),0], width = 1.5, height = 5)
+		self._add_geom_elliptical_arc(start_angle=-3*PI/4, angle=PI/2, center=[0.75/np.sqrt(2),2.5/np.sqrt(2),0], width = 1.5, height = 5)
+		self._add_geom_linear_path(self._polygram[1])
 
 class Battery(_CircuitElementTemplate):
 	def __init__(self:"Battery", **kwargs) -> None:
