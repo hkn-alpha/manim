@@ -203,8 +203,8 @@ class OpAmp(_CircuitElementTemplate):
 				'inverting input'		: self._polygram[1][1],
 				'output'				: self._polygram[2][1]
 			} | ({
-				'V+'					: self._polygram[3][1],
-				'V-'					: self._polygram[4][1]
+				'V+'					: self._polygram[3][1] if non_inverting_terminal_on_top else self._polygram[4][1],
+				'V-'					: self._polygram[4][1] if non_inverting_terminal_on_top else self._polygram[3][1]
 			} if include_bias_terminals else {}),
 			**kwargs
 		)
