@@ -348,7 +348,7 @@ class FunctionGenerator(_CircuitElementTemplate):
 
 	def generate_points(self:"FunctionGenerator"):
 		self._add_geom_linear_path(self._polygram[0])
-		self._add_geom_circle(radius=1.5, start_angle=-PI)
+		self._add_geom_arc(radius=1.5, start_angle=-PI, angle=-TAU)
 		self._add_geom_elliptical_arc(start_angle=3*PI/4, angle=-PI/2, center=[-0.75/np.sqrt(2),-2.5/np.sqrt(2),0], width = 1.5, height = 5)
 		self._add_geom_elliptical_arc(start_angle=-3*PI/4, angle=PI/2, center=[0.75/np.sqrt(2),2.5/np.sqrt(2),0], width = 1.5, height = 5)
 		self._add_geom_linear_path(self._polygram[1])
