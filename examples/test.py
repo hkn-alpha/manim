@@ -4,63 +4,63 @@ from manim_hkn import *
 
 class test(Scene):
 	def construct(self):
-		self.wait(0.1)
 
-		r1 = Battery()
-		r2 = Resistor()
-		c = Capacitor()
-		bjt_npn = BJT_NPN()
+		hkn_emblem = ImageMobject("manim_hkn/assets/img/hkn_alpha_emblem.png")
+		self.play(FadeIn(hkn_emblem))
+		self.wait(0.75)
+		self.play(hkn_emblem.animate.scale(0.3).to_corner(UR), run_time = 1.5)
 
+		RLC = Text('RLC', font_size = 100).shift(UP)
+		self.play(FadeIn(RLC))
 
-		bjt_npn.shift(UP*2).scale(0.5)
-		r1.shift(DOWN*2).rotate(PI).scale(0.5)
-		r2.shift(LEFT*3).rotate(PI/2).scale(0.5)
-		c.shift(RIGHT*3).rotate(-PI/2).scale(0.5)
+		r = Resistor().scale(0.4, about_point=ORIGIN).shift(LEFT*1.5).rotate(-PI/2).update()
+		l = Inductor().scale(0.4, about_point=ORIGIN).shift(DOWN * 2).update()
+		c = Capacitor().scale(0.4, about_point=ORIGIN).shift(RIGHT*1.5).rotate(PI/2).update()
+		v = FunctionGenerator().scale(0.4, about_point=ORIGIN).shift(UP*2).update()
 
-		hw1,vw1=connect_with_square_wire(c, 'left', bjt_npn, 'collector', 'y')
-		hw2,vw2=connect_with_square_wire(c, 'right', r1, 'negative', 'x')
-		hw3,vw3=connect_with_square_wire(r2, 'left', r1, 'positive', 'y')
-		hw4,vw4=connect_with_square_wire(r2, 'right', bjt_npn, 'emitter', 'x')
-		cElems = [bjt_npn,hw1,vw1,c,vw2,hw2,r1,hw3,vw3,r2,vw4,hw4]
+		self.wait(0.4)
+		self.play(Create(v), Transform(RLC[0], r), Transform(RLC[1], l), Transform(RLC[2], c), run_time = 2)
+		self.remove(RLC)
+		self.add(r, l, c)
 
-		for cElem in cElems:
-			cElem.update()
+		wires:list[Wire] = [
+			*connect_with_square_wire(c, 'right', v, 'right'),
+			*connect_with_square_wire(c, 'left', l, 'right'),
+			*connect_with_square_wire(r, 'left', v, 'left'),
+			*connect_with_square_wire(r, 'right', l, 'left')
+		]
 
+		for wire in wires:
+			wire.scale(0.4)
 
-		for wire in [hw1, vw1, hw2, vw2, hw3, vw3, hw4, vw4]:
-			wire.scale(0.5)
-			wire.update()
+		self.play(FadeIn(*wires))
 
-			
-		hw0, hw1 = split_wire(hw1, 0.2)
-		hw0.bind_terminal('right', bjt_npn, 'collector', Y_AXIS)
-		hw1.bind_terminal('left', bjt_npn, 'collector', Y_AXIS)
+		VIN = Text("V(t)", font_size = 75).next_to(v, UP)
+		RLC = Text("RLC", font_size = 75).next_to(r, RIGHT)
+		RLC[0].next_to(r, LEFT)
+		RLC[1].next_to(l, DOWN)
+		RLC[2].next_to(c, RIGHT)
+		rText = Text("1Ω", font_size = 75).next_to(r, RIGHT)
+		rText = Text("1Ω", font_size = 75).next_to(r, RIGHT)
+		self.play(Write(VIN), Write(RLC), run_time = 1.4)
 
-		r3 = Resistor()
-		r3.rotate(-PI/2).scale(0.5).shift([hw0.get_terminal_coord('right')[0] - r3.get_terminal_coord('left')[0], 0, 0])
-		w0 = connect_with_straight_wire(hw0, 'right', r3, 'left')
-		w1 = Wire()
-		w0=w0.scale(0.5)
-		w1=w1.scale(0.5)
-		w1.set_terminal_coordinate('left', r3.get_terminal_coord('right'))
-		w1.set_terminal_coordinate('right', [r3.get_terminal_coord('right')[0], r1.get_center()[1], r3.get_terminal_coord('right')[2]])
+		rlc_ciruit = Group(r, l, c, RLC, v, VIN, *wires)
+		self.wait(0.2)
+		self.play(rlc_ciruit.animate.shift(LEFT*4).scale(0.5), run_time = 1.5)
 
-		cElems = [bjt_npn,hw0,hw1,vw1,c,vw2,hw2,r1,hw3,vw3,r2,vw4,hw4, w0,r3,w1]
-		for cElem in cElems:
-			cElem.update()
-			self.play(Create(cElem))
-
-		self.play(
-			bjt_npn.animate.shift(DOWN*0.5+LEFT),
-			c.animate.shift(RIGHT),
-			r2.animate.shift(DOWN),
-			r1.animate.shift(DOWN+LEFT),
-			r3.animate.shift(DOWN),
-			w1.animate.shift(DOWN))
+		plane1 = NumberPlane(
+			x_range=[0,20],
+			y_range=[-6,6],
+			axis_config = {
+				'font_size' : 3000
+			}
+		)
+		graph = ImplicitFunction(
+			lambda x, y: y - 5*np.cos(x/2),
+			x_range=[0, 20],
+			y_range=[-6, 6],
+			color=YELLOW
+		).shift(LEFT*10)
+		v_graph = Group(plane1, graph, plane1.get_x_axis_label('t')).scale(0.25).shift(RIGHT*3)
+		self.play(FadeIn(v_graph))
 		
-		g = Group(*cElems)
-		self.play(g.animate.scale(0.4).shift(LEFT+DOWN))
-		self.play(g.animate.scale(2).shift(LEFT+UP))
-		self.play(c.animate.shift(RIGHT))
-		
-		self.wait(0.1)
