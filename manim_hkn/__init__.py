@@ -11,6 +11,7 @@ __all__ = [
 	'Inductor',
 	'Battery',
 	'FunctionGenerator',
+	'Ground',
 	'Wire',
 	'connect_with_straight_wire',
 	'connect_with_square_wire',
