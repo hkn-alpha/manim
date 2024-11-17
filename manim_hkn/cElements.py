@@ -359,6 +359,34 @@ class Battery(_CircuitElementTemplate):
 		self._add_geom_polygram(*self._polygram)
 		super().generate_points()
 
+
+class Ground(_CircuitElementTemplate):
+	def __init__(self:"Battery", **kwargs) -> None:
+		self._polygram:list[list[list[float]]] = [
+			[
+				[0,0,0],
+				[ 0,-0.5,0],
+				[-1,-0.5,0],
+				[+1,-0.5,0],
+			],[
+				[-0.66,-0.9,0],
+				[+0.66,-0.9,0],
+			],[
+				[-0.33,-1.3,0],
+				[+0.33,-1.3,0],
+			]
+		]
+		super().__init__(
+			terminalCoords={
+				'ground'	: self._polygram[1][0]
+			},
+			**kwargs
+		)
+		
+	def generate_points(self) -> None:
+		self._add_geom_polygram(*self._polygram)
+		super().generate_points()
+
 class Resistor(_CircuitElementTemplate):
 	# This ratio is used for the following geometric equality: <Resistor Width> = 2 * SPREAD_RATIO * <Resistor Height>
 	# In other words, this is defined by SPREAD_RATIO = 0.5 * <Resistor Width> / <Resistor Height
