@@ -336,7 +336,10 @@ class FunctionGenerator(_CircuitElementTemplate):
 	def __init__(self:"FunctionGenerator", **kwargs) -> None:
 		self._polygram = [
 			[[-2,0,0], [-1.5,0,0]],
-			[[ 1.5,0,0], [ 2,0,0]]
+			[[ 1.5,0,0], [ 2,0,0]],
+			[[-2.1,1.2,0], [-1.5,1.2,0]],
+			[[+1.5,1.2,0], [+2.1,1.2,0]],
+			[[+1.8,1.5,0], [+1.8,0.9,0]]
 		]
 		super().__init__(
 			terminalCoords={
@@ -352,6 +355,7 @@ class FunctionGenerator(_CircuitElementTemplate):
 		self._add_geom_elliptical_arc(start_angle=3*PI/4, angle=-PI/2, center=[-0.75/np.sqrt(2),-2.5/np.sqrt(2),0], width = 1.5, height = 5)
 		self._add_geom_elliptical_arc(start_angle=-3*PI/4, angle=PI/2, center=[0.75/np.sqrt(2),2.5/np.sqrt(2),0], width = 1.5, height = 5)
 		self._add_geom_linear_path(self._polygram[1])
+		self._add_geom_polygram(*self._polygram[2:])
 
 class Battery(_CircuitElementTemplate):
 	def __init__(self:"Battery", **kwargs) -> None:
@@ -386,20 +390,20 @@ class Ground(_CircuitElementTemplate):
 		self._polygram:list[list[list[float]]] = [
 			[
 				[0,0,0],
-				[ 0,-0.5,0],
-				[-1,-0.5,0],
-				[+1,-0.5,0],
+				[ 0,-0.75,0],
+				[-1.5,-0.75,0],
+				[+1.5,-0.75,0],
 			],[
-				[-0.66,-0.9,0],
-				[+0.66,-0.9,0],
+				[-1,-1.35,0],
+				[+1,-1.35,0],
 			],[
-				[-0.33,-1.3,0],
-				[+0.33,-1.3,0],
+				[-0.5,-1.95,0],
+				[+0.5,-1.95,0],
 			]
 		]
 		super().__init__(
 			terminalCoords={
-				'ground'	: self._polygram[1][0]
+				'ground'	: self._polygram[0][0]
 			},
 			**kwargs
 		)
