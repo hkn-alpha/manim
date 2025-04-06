@@ -176,6 +176,64 @@ class _CircuitElementTemplate(VMobject):
 			*args, **kwargs
 		)
 
+class CurrentSource(_CircuitElementTemplate):
+	def __init__(self:"CurrentSource", **kwargs) -> None:
+		
+		kwargs['stroke_width'] = kwargs.get('stroke_width', 3) 
+		
+		self._circle_radius: float = 0.5
+		self._arrow_length: float = 0.35
+		self._arrow_head_length: float = 0.25
+		self._arrow_head_width: float = 0.15
+		
+		terminal_wire_length = kwargs.pop('terminal_wire_length', 0.25)
+		self._terminal_wire_length: float = terminal_wire_length
+		
+		terminal_coords = {
+			'top': [0, self._circle_radius + self._terminal_wire_length, 0],
+			'bottom': [0, -self._circle_radius - self._terminal_wire_length, 0]
+		}
+	
+		super().__init__(
+			terminalCoords=terminal_coords,
+			**kwargs
+		)
+	
+	def generate_points(self:"CurrentSource") -> None:
+		# Draw the circle
+		self._add_geom_circle(
+			radius=self._circle_radius,
+			center=ORIGIN
+		)
+		
+		# Arrow shaft
+		self._add_geom_linear_path([
+			[0, -self._arrow_length, 0],
+			[0, self._arrow_length - self._arrow_head_length, 0]  # Stop before the arrow head
+		])
+		
+		# Arrow head
+		self._add_geom_pointer(
+			tip_coord=[0, self._arrow_length, 0],
+			target_coord=[0, self._arrow_length + self._arrow_head_length, 0],
+			width=self._arrow_head_width,
+			length=self._arrow_head_length,
+			pointer_notch_depth_ratio=0
+		)
+		
+		# Terminal wires
+		self._add_geom_linear_path([
+			[0, self._circle_radius, 0],
+			[0, self._circle_radius + self._terminal_wire_length, 0]
+		])
+		self._add_geom_linear_path([
+			[0, -self._circle_radius, 0],
+			[0, -self._circle_radius - self._terminal_wire_length, 0]
+		])
+		
+		super().generate_points()
+
+
 class OpAmp(_CircuitElementTemplate):
 	def __init__(self:"OpAmp", non_inverting_terminal_on_top:bool = True, include_bias_terminals:bool = False, **kwargs) -> None:
 		triangle_width:float = 3.5 / np.sqrt(3)
